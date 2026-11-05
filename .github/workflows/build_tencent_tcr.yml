@@ -1,0 +1,73 @@
+name: Build and push to Tencent TCR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TCR_REGISTRY: ${{ secrets.TCR_REGISTRY }}
+  TCR_NAMESPACE: ${{ secrets.TCR_NAMESPACE }}
+  SITE_NAME: ${{ secrets.SITE_NAME }}
+  SITE_DESCRIPTION: ${{ secrets.SITE_DESCRIPTION }}
+  SITE_KEYWORDS: ${{ secrets.SITE_KEYWORDS }}
+  SITE_DOMAIN: ${{ secrets.SITE_DOMAIN }}
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate configuration
+        shell: bash
+        env:
+          TCR_USERNAME: ${{ secrets.TCR_USERNAME }}
+          TCR_PASSWORD: ${{ secrets.TCR_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for key in TCR_REGISTRY TCR_NAMESPACE TCR_USERNAME TCR_PASSWORD; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required secret: $key" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build and push
+        shell: bash
+        env:
+          TCR_USERNAME: ${{ secrets.TCR_USERNAME }}
+          TCR_PASSWORD: ${{ secrets.TCR_PASSWORD }}
+        run: |
+          set -euo pipefail
+          docker_cmd() {
+            if [ "${DOCKER_USE_SUDO:-0}" = 1 ]; then
+              sudo -n docker "$@"
+            else
+              docker "$@"
+            fi
+          }
+          if docker version >/dev/null 2>&1; then
+            DOCKER_USE_SUDO=0
+          elif command -v sudo >/dev/null 2>&1 &&
+            sudo -n docker version >/dev/null 2>&1; then
+            DOCKER_USE_SUDO=1
+          else
+            echo "Cannot access Docker daemon from act runner" >&2
+            exit 1
+          fi
+          docker_cmd buildx version
+          printf '%s' "$TCR_PASSWORD" | docker_cmd login "$TCR_REGISTRY" \
+            --username "$TCR_USERNAME" --password-stdin
+          docker_cmd buildx build --progress plain --platform linux/amd64 \
+            --file Dockerfile \
+            --build-arg "SITE_NAME=$SITE_NAME" \
+            --build-arg "SITE_DESCRIPTION=$SITE_DESCRIPTION" \
+            --build-arg "SITE_KEYWORDS=$SITE_KEYWORDS" \
+            --build-arg "SITE_DOMAIN=${SITE_DOMAIN:-https://shermant.com}" \
+            --tag "$TCR_REGISTRY/$TCR_NAMESPACE/sherman-box:latest" \
+            --tag "$TCR_REGISTRY/$TCR_NAMESPACE/sherman-box:$GITHUB_SHA" \
+            --push .

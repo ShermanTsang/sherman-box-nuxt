@@ -16,6 +16,7 @@ Makefile
 helm-charts
 .env
 .env.*
+.act.secrets
 .editorconfig
 .idea
 coverage*

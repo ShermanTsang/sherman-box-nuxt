@@ -29,25 +29,29 @@ Notice: the stacks and the dependencies of the project maybe out of date.
 | SITE_NAME        | <string>                    |
 | SITE_DESCRIPTION | <string>                    |
 | SITE_KEYWORDS    | <string>                    |
-| API_BASEURL      | https://api.shermant.com/v1 |
-| OSS_BASEURL      | https://oss.shermant.com    |
+| API_BASEURL      | <https://api.shermant.com/v1> |
+| OSS_BASEURL      | <https://oss.shermant.com>    |
 
 ## Usage
 
 ### Run on a server
 
 #### Pull the project
+
 ```git
 git pull https://github.com/ShermanTsang/sherman-box.git
 ```
 
 #### Set configurations
+
 ```bash
 mv .env-example .env
 ```
+
 Then, set them.
 
 #### Install dependencies
+
 ```bash
 npm install
 yarn i
@@ -56,6 +60,7 @@ bun i
 ```
 
 #### Start
+
 ```bash
 npm run dev
 yarn run dev
@@ -66,6 +71,7 @@ bun run dev
 ### Ship with Docker
 
 #### Pull the image
+
 ```bash
 # pull from dockerhub
 docker pull shermantsang/sherman-box:latest
@@ -73,6 +79,7 @@ docker pull shermantsang/sherman-box:latest
 # pull from github
 docker pull ghcr.io/shermantsang/sherman-box:master
 ```
+
 #### Launch a container
 
 You need to pass required env options in command
@@ -92,19 +99,46 @@ docker run -d
   sherman-box:latest
   ```
 
+### Build and push to Tencent TCR
+
+Install [act](https://nektosact.com/installation/) and Docker with Buildx. Copy
+`.env-example` to `.env` if needed, then set the TCR registry hostname,
+namespace, username and password in `.env`. The optional `SITE_*` values in
+that same file are baked into the Nuxt image at build time; API and OSS
+addresses are runtime settings.
+
+```bash
+# Edit .env before running:
+scripts/deploy-act.sh --dryrun
+scripts/deploy-act.sh
+```
+
+The script runs the manual TCR workflow locally, building the image on each
+run (Docker may reuse cached layers) and pushing `sherman-box:latest`
+and `sherman-box:<commit SHA>` for `linux/amd64`. The TCR repository and push
+permissions must exist beforehand. Local uncommitted changes are included by
+act, so commit changes first if the SHA tag must identify the exact source.
+The same workflow can also be run manually in GitHub Actions after configuring
+`TCR_REGISTRY`, `TCR_NAMESPACE`, `TCR_USERNAME`, and `TCR_PASSWORD` as repository
+secrets; the optional `SITE_*` values can also be set as secrets there.
+
 ### Play with PM2
 
 #### Prepare
+
 Pull the project, set configurations, install dependencies like the steps mentioned in `Usage > Run on a server`.
 
 #### Build
+
 ```bash
 bun install
 bun run build
 ```
+
 Use `bun run build` (not bare `bun build`, which invokes Bun's bundler).
 
 #### Start
+
 A `pm2` configuration has included in project, you can customize your project instance by editing `ecosystem.config.js`.
 
 ```bash
@@ -120,16 +154,18 @@ bun run pm2
 Notice: PM2 does not read `.env` files. The `/api` and `/oss` proxy rules and the default public values are resolved at build time, so keep `.env` in place before running `bun run build`. The public values (site name, description, keywords, domain, API and OSS URLs) can still be overridden at runtime: export `NUXT_PUBLIC_*` (or the legacy names like `SITE_NAME`/`API_BASEURL`, which `ecosystem.config.js` maps for you) in the shell before `pm2 start`.
 
 #### Auto start on boot
+
 ```bash
 pm2 save
 pm2 startup
 ```
 
-
 ## Contributing
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
+
 This project is open source and available under the MIT License.
 
 I hope you find Sherman-Box useful! If you have any questions or feedback, please open an issue on GitHub.

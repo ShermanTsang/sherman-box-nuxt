@@ -1,0 +1,2 @@
+# The runner follows the host architecture; the workflow builds linux/amd64.
+-P ubuntu-latest=catthehacker/ubuntu:full-latest
