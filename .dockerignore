@@ -1,4 +1,9 @@
 node_modules
+.output
+.nuxt
+dist
+nuxt-output-tar.gz
+*.tar.gz
 Dockerfile*
 docker-compose*
 .dockerignore
@@ -10,6 +15,7 @@ LICENSE
 Makefile
 helm-charts
 .env
+.env.*
 .editorconfig
 .idea
 coverage*
