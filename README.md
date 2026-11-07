@@ -102,13 +102,15 @@ docker run -d
 ### Build and push to Tencent TCR
 
 Install [act](https://nektosact.com/installation/) and Docker with Buildx. Copy
-`.env-example` to `.env` if needed, then set the TCR registry hostname,
-namespace, username and password in `.env`. The optional `SITE_*` values in
-that same file are baked into the Nuxt image at build time; API and OSS
-addresses are runtime settings.
+`.env-example` to `.env` for local site settings, and copy
+`.act.secrets.example` to `.act.secrets` for the TCR registry hostname,
+namespace, username and password. Keep `.act.secrets` private; it is ignored by
+Git. If upgrading, move the four `TCR_*` entries from `.env` to `.act.secrets`.
+The optional `SITE_*` values in `.env` are baked into the Nuxt image at build
+time; API and OSS addresses are runtime settings.
 
 ```bash
-# Edit .env before running:
+# Edit .env and .act.secrets before running:
 scripts/deploy-act.sh --dryrun
 scripts/deploy-act.sh
 ```
